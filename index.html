@@ -87,7 +87,6 @@
       }
       .toggle-button {
         padding: 10px 20px;
-        min-width: 170px;
         background: #333;
         color: #fff;
         border: none;
@@ -105,46 +104,10 @@
       .toggle-button:hover {
         background: #000;
       }
-
-      .add-calendar-button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 10px 20px;
-        margin-top: 10px;
-        background: #0f9d58;
-        color: #fff;
-        border: none;
-        border-radius: 6px;
-        font-weight: 600;
-        font-size: 14px;
-        cursor: pointer;
-        transition: background 0.2s;
-      }
-
-      .add-calendar-button:hover {
-        background: #0c7c44;
-      }
-
-      .add-calendar-button svg {
-        width: 18px;
-        height: 18px;
-        fill: currentColor;
-      }
-
       @media (max-width: 600px) {
         .form-row {
           flex-direction: column;
           gap: 5px;
-        }
-        .toggle-button {
-          width: 100%;
-          min-width: unset;
-        }
-        .add-calendar-button {
-          width: 100%;
-          justify-content: center;
         }
       }
     </style>
@@ -162,7 +125,12 @@
             <input type="text" id="city" placeholder="Wpisz miasto" required />
             <div id="citySuggestions" class="suggestions" hidden></div>
           </div>
-          <button type="button" id="toggleButton" class="toggle-button">
+          <button
+            type="button"
+            id="toggleButton"
+            class="toggle-button"
+            style="width: 160px"
+          >
             Praca dodatkowa
           </button>
         </div>
@@ -176,15 +144,25 @@
             ></textarea>
           </div>
         </div>
-        <button type="submit" class="add-calendar-button">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <button
+          type="submit"
+          class="toggle-button"
+          style="background: #0f9d58; width: 160px; gap: 6px"
+        >
+          Dodaj do
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            height="18"
+            width="18"
+            fill="white"
+            viewBox="0 0 24 24"
+          >
             <path
-              d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v15c0 1.1.9 2 2 
-            2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 17H5V8h14v12zM12 
-            10h-2v4H8v2h2v4h2v-4h2v-2h-2v-4z"
+              d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v15c0 1.1.9 2 
+            2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 
+            17H5V8h14v12zM12 10h-2v4H8v2h2v4h2v-4h2v-2h-2v-4z"
             />
           </svg>
-          Dodaj do Kalendarza
         </button>
       </form>
     </div>
@@ -273,9 +251,9 @@
         const title = document.getElementById("title").value.trim();
         const description = document.getElementById("description").value.trim();
         const location = document.getElementById("city").value.trim();
-        const type = toggleState ? "Ryczałt" : "Praca dodatkowa";
-
-        const fullDetails = `${description}\nTyp: ${type}`;
+        const details = `${description} (${
+          toggleState ? "Ryczałt" : "Praca dodatkowa"
+        })`;
 
         const now = new Date();
         const start = new Date(
@@ -294,21 +272,22 @@
           0,
           0
         );
+
         const formatDate = (d) =>
           d
             .toISOString()
             .replace(/-|:|\.\d\d\d/g, "")
             .slice(0, 15) + "Z";
 
-        const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
+        const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
           title
         )}&dates=${formatDate(start)}/${formatDate(
           end
-        )}&details=${encodeURIComponent(
-          fullDetails
-        )}&location=${encodeURIComponent(location)}`;
+        )}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(
+          location
+        )}`;
 
-        window.open(calendarUrl, "_blank");
+        window.open(url, "_blank");
       });
     </script>
   </body>
