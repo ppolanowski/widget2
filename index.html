@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task Manager</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial,
+          sans-serif;
+        background: #fff;
+        min-height: 100vh;
+      }
+      .container {
+        width: 100%;
+        min-height: 100vh;
+        background: #fff;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+      }
+      .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+        align-items: flex-end;
+      }
+      .form-group {
+        flex: 1;
+        position: relative;
+      }
+      label {
+        display: block;
+        margin-bottom: 4px;
+        color: #2c3e50;
+        font-weight: 500;
+        font-size: 13px;
+      }
+      input[type="text"],
+      textarea {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #e1e8ed;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: all 0.2s;
+      }
+      input[type="text"] {
+        height: 40px;
+      }
+      input:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+      }
+      textarea {
+        resize: none;
+        min-height: 100px;
+      }
+      .suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: #fff;
+        border: 1px solid #e1e8ed;
+        border-radius: 6px;
+        max-height: 150px;
+        overflow-y: auto;
+        z-index: 100;
+      }
+      .suggestion-item {
+        padding: 8px 10px;
+        cursor: pointer;
+      }
+      .suggestion-item:hover,
+      .suggestion-item.active {
+        background: #f0f0f0;
+      }
+      .toggle-button {
+        padding: 10px 20px;
+        width: 140px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 40px;
+      }
+      .toggle-button:hover {
+        background: #000;
+      }
+      @media (max-width: 600px) {
+        .form-row {
+          flex-direction: column;
+          gap: 5px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <form id="taskForm" autocomplete="off">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="title">Tytuł zgłoszenia</label>
+            <input type="text" id="title" placeholder="Tytuł" required />
+          </div>
+          <div class="form-group">
+            <label for="city">Miasto</label>
+            <input type="text" id="city" placeholder="Wpisz miasto" required />
+            <div id="citySuggestions" class="suggestions" hidden></div>
+          </div>
+          <button type="button" id="toggleButton" class="toggle-button">
+            Praca dodatkowa
+          </button>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="flex: 1 1 100%">
+            <label for="description">Opis</label>
+            <textarea
+              id="description"
+              placeholder="Opis zadania"
+              required
+            ></textarea>
+          </div>
+        </div>
+        <button type="submit" class="toggle-button" style="background: #0f9d58">
+          Dodaj do Kalendarza Google
+        </button>
+      </form>
+    </div>
+
+    <script>
+      const cities = [
+        "Bydgoszcz",
+        "Elbląg",
+        "Gdańsk B",
+        "Gdańsk S",
+        "Słupsk",
+        "Koszalin",
+        "Toruń",
+        "Olsztyn",
+        "Suwałki",
+        "Gorzów Wielkopolski",
+        "Piła",
+        "Szczecin",
+        "Przecław",
+      ];
+      const cityInput = document.getElementById("city");
+      const suggestionsBox = document.getElementById("citySuggestions");
+      const toggleButton = document.getElementById("toggleButton");
+      const form = document.getElementById("taskForm");
+      let activeIndex = -1;
+      let toggleState = false;
+
+      function renderSuggestions(matches) {
+        suggestionsBox.innerHTML = "";
+        matches.forEach((city, i) => {
+          const div = document.createElement("div");
+          div.textContent = city;
+          div.className = "suggestion-item";
+          if (i === activeIndex) div.classList.add("active");
+          div.addEventListener("click", () => selectCity(city));
+          suggestionsBox.appendChild(div);
+        });
+      }
+
+      function selectCity(city) {
+        cityInput.value = city;
+        suggestionsBox.hidden = true;
+        activeIndex = -1;
+      }
+
+      cityInput.addEventListener("input", () => {
+        const v = cityInput.value.trim().toLowerCase();
+        if (!v) return (suggestionsBox.hidden = true);
+        const m = cities.filter((c) => c.toLowerCase().includes(v));
+        if (!m.length) return (suggestionsBox.hidden = true);
+        renderSuggestions(m);
+        suggestionsBox.hidden = false;
+        if (m.length === 1) selectCity(m[0]);
+      });
+
+      cityInput.addEventListener("keydown", (e) => {
+        const items = suggestionsBox.querySelectorAll(".suggestion-item");
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          activeIndex = (activeIndex + 1) % items.length;
+          renderSuggestions(Array.from(items).map((i) => i.textContent));
+        } else if (e.key === "ArrowUp") {
+          e.preventDefault();
+          activeIndex = (activeIndex - 1 + items.length) % items.length;
+          renderSuggestions(Array.from(items).map((i) => i.textContent));
+        } else if (e.key === "Enter" && activeIndex > -1) {
+          e.preventDefault();
+          selectCity(items[activeIndex].textContent);
+        }
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest(".form-group")) {
+          suggestionsBox.hidden = true;
+          activeIndex = -1;
+        }
+      });
+
+      toggleButton.addEventListener("click", () => {
+        toggleState = !toggleState;
+        toggleButton.textContent = toggleState ? "Ryczałt" : "Praca dodatkowa";
+      });
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const title = document.getElementById("title").value.trim();
+        const description = document.getElementById("description").value.trim();
+        const location = document.getElementById("city").value.trim();
+        const details = `${description} (${
+          toggleState ? "Ryczałt" : "Praca dodatkowa"
+        })`;
+
+        const now = new Date();
+        const start = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          10,
+          0,
+          0
+        );
+        const end = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          11,
+          0,
+          0
+        );
+
+        const formatDate = (d) =>
+          d
+            .toISOString()
+            .replace(/-|:|\.\d\d\d/g, "")
+            .slice(0, 15) + "Z";
+
+        const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
+          title
+        )}&dates=${formatDate(start)}/${formatDate(
+          end
+        )}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(
+          location
+        )}`;
+
+        window.open(url, "_blank");
+      });
+    </script>
+  </body>
+</html>
