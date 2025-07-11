@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Task Manager</title>
     <style>
-      /* Reset */
       * {
         margin: 0;
         padding: 0;
@@ -20,7 +19,6 @@
       .container {
         width: 100%;
         min-height: 100vh;
-        background: #fff;
         padding: 15px;
         display: flex;
         flex-direction: column;
@@ -51,7 +49,7 @@
         border: 1px solid #e1e8ed;
         border-radius: 6px;
         font-size: 14px;
-        transition: all 0.2s;
+        transition: border-color 0.2s, box-shadow 0.2s;
       }
       input[type="text"] {
         height: 40px;
@@ -88,24 +86,24 @@
       }
       .toggle-button {
         padding: 10px 20px;
-        width: 140px;
-        background: #000; /* czarny przed najechaniem */
+        background-color: #000;
         color: #fff;
         border: none;
         border-radius: 6px;
         font-size: 14px;
         font-weight: 600;
         cursor: pointer;
-        transition: background 0.2s; /* płynne przejście */
+        transition: background-color 0.2s;
         display: flex;
         align-items: center;
         justify-content: center;
         height: 40px;
+        white-space: nowrap;
+        gap: 8px;
       }
       .toggle-button:hover {
-        background: #333; /* rozjaśniony po najechaniu */
+        background-color: #222;
       }
-      /* Responsive small sizes */
       @media (max-width: 600px) {
         .form-row {
           flex-direction: column;
@@ -127,7 +125,12 @@
             <input type="text" id="city" placeholder="Wpisz miasto" required />
             <div id="citySuggestions" class="suggestions" hidden></div>
           </div>
-          <button type="button" id="toggleButton" class="toggle-button">
+          <button
+            type="button"
+            id="toggleButton"
+            class="toggle-button"
+            style="width: 160px"
+          >
             Praca dodatkowa
           </button>
         </div>
@@ -141,8 +144,21 @@
             ></textarea>
           </div>
         </div>
+        <button
+          type="submit"
+          id="calendarButton"
+          class="toggle-button"
+          style="width: 160px"
+        >
+          Dodaj do
+          <img
+            src="https://img.icons8.com/material-outlined/24/ffffff/calendar--v1.png"
+            alt="kalendarz"
+          />
+        </button>
       </form>
     </div>
+
     <script>
       const cities = [
         "Bydgoszcz",
@@ -161,7 +177,11 @@
       ];
       const cityInput = document.getElementById("city");
       const suggestionsBox = document.getElementById("citySuggestions");
+      const toggleButton = document.getElementById("toggleButton");
+      const form = document.getElementById("taskForm");
       let activeIndex = -1;
+      let toggleState = false;
+
       function renderSuggestions(matches) {
         suggestionsBox.innerHTML = "";
         matches.forEach((city, i) => {
@@ -173,11 +193,13 @@
           suggestionsBox.appendChild(div);
         });
       }
+
       function selectCity(city) {
         cityInput.value = city;
         suggestionsBox.hidden = true;
         activeIndex = -1;
       }
+
       cityInput.addEventListener("input", () => {
         const v = cityInput.value.trim().toLowerCase();
         if (!v) {
@@ -193,8 +215,10 @@
         suggestionsBox.hidden = false;
         if (m.length === 1) selectCity(m[0]);
       });
+
       cityInput.addEventListener("keydown", (e) => {
         const items = suggestionsBox.querySelectorAll(".suggestion-item");
+        if (!items.length) return;
         if (e.key === "ArrowDown") {
           e.preventDefault();
           activeIndex = (activeIndex + 1) % items.length;
@@ -206,27 +230,61 @@
         } else if (e.key === "Enter" && activeIndex > -1) {
           e.preventDefault();
           selectCity(items[activeIndex].textContent);
-        } else if (e.key === "Backspace") {
-          const val = cityInput.value.trim();
-          if (cities.includes(val) && suggestionsBox.hidden) {
-            cityInput.value = "";
-            suggestionsBox.hidden = true;
-            activeIndex = -1;
-            e.preventDefault();
-          }
         }
       });
+
       document.addEventListener("click", (e) => {
         if (!e.target.closest(".form-group")) {
           suggestionsBox.hidden = true;
           activeIndex = -1;
         }
       });
-      const toggleButton = document.getElementById("toggleButton");
-      let toggleState = false;
+
       toggleButton.addEventListener("click", () => {
         toggleState = !toggleState;
         toggleButton.textContent = toggleState ? "Ryczałt" : "Praca dodatkowa";
+      });
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const title = document.getElementById("title").value.trim();
+        const description = document.getElementById("description").value.trim();
+        const location = document.getElementById("city").value.trim();
+        const details = `${description} (${
+          toggleState ? "Ryczałt" : "Praca dodatkowa"
+        })`;
+
+        const now = new Date();
+        const start = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          10,
+          0,
+          0
+        );
+        const end = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          11,
+          0,
+          0
+        );
+        const formatDate = (d) =>
+          d
+            .toISOString()
+            .replace(/-|:|\.\d\d\d/g, "")
+            .slice(0, 15) + "Z";
+
+        const url =
+          `https://calendar.google.com/calendar/render?action=TEMPLATE` +
+          `&text=${encodeURIComponent(title)}` +
+          `&dates=${formatDate(start)}/${formatDate(end)}` +
+          `&details=${encodeURIComponent(details)}` +
+          `&location=${encodeURIComponent(location)}`;
+
+        window.open(url, "_blank");
       });
     </script>
   </body>
